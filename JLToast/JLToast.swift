@@ -27,7 +27,7 @@ public struct JLToastDelay {
 @objc public class JLToast: NSOperation {
 
     public var view: JLToastView = JLToastView()
-    
+
     public var text: String? {
         get {
             return self.view.textLabel.text
@@ -39,6 +39,9 @@ public struct JLToastDelay {
 
     public var delay: NSTimeInterval = 0
     public var duration: NSTimeInterval = JLToastDelay.ShortDelay
+    public var fadeIn: NSTimeInterval = 0.5
+    public var fadeOut: NSTimeInterval = 0.5
+
 
     private var _executing = false
     override public var executing: Bool {
@@ -74,28 +77,22 @@ public struct JLToastDelay {
         }
         return windows.first!
     }
-    
-    
-    public class func makeText(text: String) -> JLToast {
-        return JLToast.makeText(text, delay: 0, duration: JLToastDelay.ShortDelay)
-    }
-    
-    public class func makeText(text: String, duration: NSTimeInterval) -> JLToast {
-        return JLToast.makeText(text, delay: 0, duration: duration)
-    }
-    
-    public class func makeText(text: String, delay: NSTimeInterval, duration: NSTimeInterval) -> JLToast {
+
+        public class func makeText(text: String, delay: NSTimeInterval = 0, duration: NSTimeInterval = JLToastDelay.ShortDelay, fadeIn: NSTimeInterval = 0.5, fadeOut: NSTimeInterval = 0.5) -> JLToast {
         let toast = JLToast()
         toast.text = text
         toast.delay = delay
         toast.duration = duration
+        toast.fadeIn = fadeIn
+        toast.fadeOut = fadeOut
+
         return toast
     }
-    
+
     public func show() {
         JLToastCenter.defaultCenter().addToast(self)
     }
-    
+
     override public func start() {
         if !NSThread.isMainThread() {
             dispatch_async(dispatch_get_main_queue(), {
@@ -114,7 +111,7 @@ public struct JLToastDelay {
             self.view.alpha = 0
             self.window.addSubview(self.view)
             UIView.animateWithDuration(
-                0.5,
+                self.fadeIn,
                 delay: self.delay,
                 options: .BeginFromCurrentState,
                 animations: {
@@ -128,7 +125,7 @@ public struct JLToastDelay {
                         },
                         completion: { completed in
                             self.finish()
-                            UIView.animateWithDuration(0.5, animations: {
+                            UIView.animateWithDuration(self.fadeOut, animations: {
                                 self.view.alpha = 0
                             })
                         }
@@ -137,7 +134,7 @@ public struct JLToastDelay {
             )
         })
     }
-    
+
     public func finish() {
         self.executing = false
         self.finished = true
